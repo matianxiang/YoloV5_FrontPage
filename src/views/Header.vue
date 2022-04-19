@@ -6,7 +6,7 @@
       </el-icon>
     </div>
     <div class="title">
-      <span>基于YOLOv5的无人机森林火灾监测平台</span>
+      <span>基于目标检测和深度学习的火灾监测平台</span>
     </div>
   </div>
 </template>

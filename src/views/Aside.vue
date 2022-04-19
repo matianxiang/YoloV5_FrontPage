@@ -19,6 +19,7 @@
         active-text-color="#ffd04b"
         text-color="#fff"
         router="true"
+        default-active="3"
       >
         <el-sub-menu index="1">
           <template #title>
@@ -90,7 +91,7 @@ const handleClose = (key: string, keyPath: string[]) => {
 
 <style lang="scss" scoped>
 .container {
-  height: 100%;
+  height: 100vh;
   background-color: #545c64;
   display: felx;
   flex-direction: column;

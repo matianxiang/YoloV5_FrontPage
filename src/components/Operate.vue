@@ -42,6 +42,9 @@
                 </template>
               </el-upload>
             </div>
+            <div class="progress" v-show="reactiveData.isUploading">
+              <el-progress :percentage="100" :format="format" :indeterminate="true" />
+            </div>
           </el-card>
         </el-collapse-transition>
       </div>
@@ -89,8 +92,9 @@
 <script lang="ts" setup>
 import { ref, reactive } from 'vue'
 import { UploadFilled, Close } from '@element-plus/icons-vue'
-
 import useCurrentInstance from '@/utils/useCurrentInstance'
+
+const format = (percentage:any) => (percentage === 100 ? '' : `${percentage}%`)
 
 const { proxy } = useCurrentInstance()
 
@@ -102,7 +106,8 @@ let reactiveData = reactive({
   show: false,
   imgArr:[],
   imgShow: false,
-  fileList: []
+  fileList: [],
+  isUploading: false
 })
 
 
@@ -115,6 +120,8 @@ const exceed = () => {
 
 // 文件上传前的钩子，数为上传的文件
 const beforeUpload = (file: any) => {
+
+  reactiveData.isUploading = true
   // 判断图片是否大于2M
   const isLt2M = file.size / 1024 / 1024 < 2
   // const fileType = file.name.substring(file.name.lastIndexOf('.')+1)
@@ -136,6 +143,8 @@ const beforeUpload = (file: any) => {
 const uploadSuccess = (res: any, file: any, fileList: any) => {
   console.log(res, 'res')
   if (Number(res.code) !== 200) {
+    reactiveData.isUploading = false
+    reactiveData.fileList = []
     return proxy.$message.error('上传不成功,请检查网络')
   }
   // 返回图片的路径
@@ -144,11 +153,13 @@ const uploadSuccess = (res: any, file: any, fileList: any) => {
   setTimeout(() => {
     reactiveData.fileList = []
     reactiveData.show = false
+    proxy.$message.success('上传成功')
   }, 1000)
 }
 
 //  上传失败时的钩子
 const uploadError = () => {
+  reactiveData.isUploading = false
   return proxy.$message.error('上传失败，检查网络原因')
 }
 </script>
