@@ -20,7 +20,7 @@ module.exports = {
   devServer: {
     proxy: {
         '/api': {
-            target: 'http://localhost:5200',    // api接口基础路径
+            target: 'http://127.0.0.1:5200',    // api接口基础路径
             changeOrigin: true,                 // 是否支持跨域
             ws: true,
             pathRewrite: {

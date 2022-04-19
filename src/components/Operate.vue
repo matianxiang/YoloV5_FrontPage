@@ -1,72 +1,94 @@
 <template>
-  <div
-    class="container"
-    :style="{
-      backgroundImage: 'url(' + require('../assets/image/02.jpg') + ')'
-    }"
-  >
-    <div class="upload">
-      <transition name="el-zoom-in-top">
-        <el-card class="box-card" v-show="show" style="height: 100%">
-          <template v-slot:header>
-            <div class="clearfix" style="text-align: center">
-              <span>上传图片(.jpg/png)</span>
-            </div>
-          </template>
-          <div class="transition-box" style="display: flex; margin-top: 40px">
-            <el-upload
-              ref="upload"
-              class="upload-demo"
-              drag
-              :action="uploadPath"
-              multiple
-              style="margin: auto"
-              list-type="picture"
-              limit="1"
-              accept=".jpg, .jpeg, .png"
-              :before-upload="beforeUpload"
-              :on-exceed="exceed"
-              :on-success="uploadSuccess"
-              :on-error="uploadError"
-              :on-remove="fileRemove"
-              :file-list="imageList"
-            >
-              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-              <div class="el-upload__text">
-                将文件拖到此处，或
-                <em>点击上传</em>
+  <div class="container">
+    <div class="uploadBox">
+      <div class="upload">
+        <el-collapse-transition>
+          <el-card
+            class="box-card"
+            v-show="reactiveData.show"
+            style="width: 100%"
+          >
+            <template v-slot:header>
+              <div class="clearfix" style="text-align: center">
+                <span>上传图片(.jpg/png)</span>
               </div>
-              <template #tip>
-                <div class="el-upload__tip" style="text-align: center">
-                  文件上传速度跟当前环境有关，请耐心等待
+            </template>
+            <div class="transition-box" style="display: flex; margin-top: 40px">
+              <el-upload
+                ref="upload"
+                class="upload-demo"
+                drag
+                :action="uploadPath"
+                multiple
+                style="margin: auto"
+                list-type="picture"
+                limit="1"
+                accept=".jpg, .jpeg, .png"
+                :before-upload="beforeUpload"
+                :on-exceed="exceed"
+                :on-success="uploadSuccess"
+                :on-error="uploadError"
+                :file-list="reactiveData.fileList"
+              >
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">
+                  将文件拖到此处，或
+                  <em>点击上传</em>
                 </div>
-              </template>
-            </el-upload>
-          </div>
-
-          <!--<form :action="imgpath" enctype="multipart/form-data" method="post" style="margin: auto">-->
-          <!--<input type="file" name="upload" multiple="multiple"><br>-->
-          <!--<input type="submit" value="Upload">-->
-          <!--</form>-->
-        </el-card>
-      </transition>
+                <template #tip>
+                  <div class="el-upload__tip" style="text-align: center">
+                    文件上传速度跟当前环境有关，请耐心等待
+                  </div>
+                </template>
+              </el-upload>
+            </div>
+          </el-card>
+        </el-collapse-transition>
+      </div>
+    </div>
+    <div class="top_button">
       <el-button
         type="primary"
         size="big"
-        style="float: right"
-        v-show="!show"
-        @click="show = !show"
+        style=""
+        v-show="!reactiveData.show"
+        @click="reactiveData.show = !reactiveData.show"
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         上传
       </el-button>
+      <el-button
+        type="primary"
+        size="big"
+        style=""
+        v-show="reactiveData.show"
+        @click="reactiveData.show = !reactiveData.show"
+      >
+        <el-icon class="el-icon--upload"><close /></el-icon>
+        取消
+      </el-button>
+    </div>
+    <div class="pictureBox">
+      <h2>已处理的图片</h2>
+      <hr />
+      <div class="imgBox" v-if="reactiveData.imgShow">
+        <div
+          v-for="(item, index) in reactiveData.imgArr"
+          :key="item.date"
+          class="imgItem"
+        >
+          <img :src="item.imgPath" alt="" />
+          <div class="date">上传时间：{{ item.date }}</div>
+          <div class="index">序号：{{ index }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { ref, reactive } from 'vue'
+import { UploadFilled, Close } from '@element-plus/icons-vue'
 
 import useCurrentInstance from '@/utils/useCurrentInstance'
 
@@ -75,16 +97,20 @@ const { proxy } = useCurrentInstance()
 // 上传路由
 // const uploadPath = proxy.$basePath + '/api/upload'
 const uploadPath = '/api/upload'
-// 引用路径
-let imgPath = ref(proxy.$basePath + '/file/') //然后动态绑定背景图片 :style = "{backgroundImage:imgPath}"
 
-const show = ref(false)
+let reactiveData = reactive({
+  show: false,
+  imgArr:[],
+  imgShow: false,
+  fileList: []
+})
+
 
 const upload: any = ref(null)
 
-// 上传图片超出数量限制时的钩子
-const exceed = (files, fileList) => {
-  proxy.$message.error('最多上传1张图片哦！')
+//上传图片超出数量限制时的钩子
+const exceed = () => {
+  proxy.$message.error('最多同时上传1张图片哦！')
 }
 
 // 文件上传前的钩子，数为上传的文件
@@ -108,12 +134,17 @@ const beforeUpload = (file: any) => {
 }
 
 const uploadSuccess = (res: any, file: any, fileList: any) => {
-  if (res.code !== 200) {
-    return proxy.$message.error(res.msg)
+  console.log(res, 'res')
+  if (Number(res.code) !== 200) {
+    return proxy.$message.error('上传不成功,请检查网络')
   }
   // 返回图片的路径
-  imgPath = res.data.imgPath
-  alert('返回成功')
+  reactiveData.imgArr.unshift(res.data[0])
+  reactiveData.imgShow = true
+  setTimeout(() => {
+    reactiveData.fileList = []
+    reactiveData.show = false
+  }, 1000)
 }
 
 //  上传失败时的钩子
@@ -133,8 +164,54 @@ const uploadError = () => {
   -o-background-size: cover;
   background-position: center 0;
 
-  .upload {
-    height: 100%;
+  .pictureBox {
+    h2 {
+      text-align: center;
+    }
+    .imgBox {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+    
+      
+      .imgItem {
+        width: 30%;
+        height: 30%;
+        padding-bottom: 5px;
+
+        img{
+          height: 100%;
+          width: 100%;
+        }
+        .date{
+            color: rgb(159, 144, 144);
+            font-size: 14px;
+            text-align: center;
+        }
+        .index{
+          color: rgb(158, 161, 164);
+          font-size: 12px;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .uploadBox {
+    width: 60%;
+    margin: 0 auto;
+
+    .upload {
+      // height: 100%;
+      width: 60%;
+      position: absolute;
+    }
+  }
+
+  .top_button {
+    display: flex;
+    flex-direction: row-reverse;
   }
 }
 </style>

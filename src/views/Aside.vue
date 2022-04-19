@@ -90,7 +90,7 @@ const handleClose = (key: string, keyPath: string[]) => {
 
 <style lang="scss" scoped>
 .container {
-  height: 100vh;
+  height: 100%;
   background-color: #545c64;
   display: felx;
   flex-direction: column;
